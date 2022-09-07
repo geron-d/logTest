@@ -1,0 +1,49 @@
+package by.it.academy.test;
+
+import by.it.academy.repositories.user.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
+import javax.persistence.EntityManager;
+import javax.sql.DataSource;
+
+@DataJpaTest
+@Testcontainers
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class UserProstgreRepositoryTest {
+
+    @Autowired
+    private EntityManager entityManager;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private DataSource dataSource;
+    @Autowired
+    private TestEntityManager testEntityManager;
+
+    private static final DockerImageName SQL_IMAGE = DockerImageName.parse("postgres:9.6.12");
+
+    @Container
+    private static MySQLContainer<?> mySQLContainer =
+            new MySQLContainer<>(SQL_IMAGE)
+                    .withDatabaseName("test")
+                    .withUsername("user")
+                    .withPassword("qwerty")
+                    .withExposedPorts(55028);
+
+    @DynamicPropertySource
+    static void getProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", mySQLContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", mySQLContainer::getUsername);
+        registry.add("spring.datasource.password", mySQLContainer::getPassword);
+    }
+
+}
